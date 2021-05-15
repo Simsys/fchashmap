@@ -1,0 +1,44 @@
+[package]
+authors = ["Simsys <winfried.simon@gmail.com>"]
+edition = "2018"
+readme = "README.md"
+name = "uart"
+version = "0.1.0"
+
+[dependencies]
+embedded-hal = "0.2"
+cortex-m-rt = "0.6"
+cortex-m = "0.6.0"
+hash32 = "0.2.1"
+rand_xorshift = "0.3.0"
+rand_core = "0.6.2"
+heapless = "0.7.0"
+
+[dependencies.fchashmap]
+path = "../.."
+
+[dependencies.stm32f3xx-hal]
+features = ["stm32f303xc", "rt"]
+version = "0.6"
+
+[dependencies.stm32f3]
+version = "0.12.1"
+features = ["stm32f303", "rt"]
+
+# this lets you use `cargo fix`!
+[[bin]]
+name = "uart"
+test = false
+bench = false
+
+[profile.dev]
+opt-level = 1
+codegen-units = 16
+debug = true
+lto = false
+
+[profile.release]
+opt-level = "s"     # optimize for size
+codegen-units = 1   # better optimizations
+debug = true        # symbols are nice and they don't increase the size on Flash
+lto = true          # better optimizations
