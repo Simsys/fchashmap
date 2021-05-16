@@ -11,8 +11,8 @@
 //! [2](https://codecapsule.com/2013/11/17/robin-hood-hashing-backward-shift-deletion/))
 //! the functionality is explained very nicely.
 #![cfg_attr(not(test), no_std)]
-mod utils;
-use utils::{Iter, IterMut, Map};
+mod map;
+use map::{Iter, IterMut, Map};
 //use std::{fmt::Display};
 use core::{borrow::Borrow, fmt, iter::FromIterator, ops};
 use hash32::Hash;

@@ -1,2 +1,4 @@
 /target
+/benches/cm4_performance/target
+/benches/cm4_performance/__pycache__
 Cargo.lock

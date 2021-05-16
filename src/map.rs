@@ -1,7 +1,6 @@
 #![allow(dead_code)]
 use arrayvec::ArrayVec;
-use core::{borrow::Borrow, mem, slice}; //, fmt};
-                                        //use std::{fmt::Display};
+use core::{borrow::Borrow, mem, slice};
 use hash32::{BuildHasher, BuildHasherDefault, FnvHasher, Hash, Hasher};
 
 #[derive(Clone, Copy, PartialEq)]
@@ -59,9 +58,7 @@ pub struct Bucket<K, V> {
     hash: HashValue,
 }
 
-pub struct Map<K, V, const CAP: usize> /*    where
-K: Display,
-V: Display,*/ {
+pub struct Map<K, V, const CAP: usize> {
     pub buckets: ArrayVec<Bucket<K, V>, CAP>,
     hash_table: [HashIndex; CAP],
     build_hasher: BuildHasherDefault<FnvHasher>,
