@@ -13,7 +13,7 @@
  [2](https://codecapsule.com/2013/11/17/robin-hood-hashing-backward-shift-deletion/))
  the functionality is explained very nicely.
 
-# Notes
+## Notes
 
  The realization of the hashmap is based on the Robin Hood hashing algorithm. This method  
  is simple and robust with reasonable performance. However, the fixed capacity implementation
@@ -26,7 +26,7 @@
  - The hashmap should not be used to its full capacity, otherwise it will become slow.
    10 to 20 percent of the capacity should always be kept free.
 
- # Example
+ ## Example
 
  ```rust
  use fchashmap::FcHashMap;
@@ -70,14 +70,14 @@
  assert!(fc_hash_map.get(&dev3).is_none());
  ```
  
- # Performance
+ ## Performance
 
  The following diagram shows the timing behavior on a Cortex M4f system (STM32F3) at 72 MHz. It
  can be seen that the performance of the hashmap decreases significantly from a fill margin of 
  about 80%.
  ![Image](benches/cm4_performance/fchashmap.png)
 
-# Additional Remarks
+## Additional Remarks
 
 In a project I use the crate ArrayVec because of missing functionality in Heapless::Vec. Since I 
 needed additionally a HashMap I had to find out that there was no suitable stand alone HashMap, 
