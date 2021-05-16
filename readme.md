@@ -26,7 +26,7 @@
  - The hashmap should not be used to its full capacity, otherwise it will become slow.
    10 to 20 percent of the capacity should always be kept free.
 
- ## Example
+ # Example
 
  ```rust
  use fchashmap::FcHashMap;
@@ -70,12 +70,26 @@
  assert!(fc_hash_map.get(&dev3).is_none());
  ```
  
- ## Performance
+ # Performance
 
  The following diagram shows the timing behavior on a Cortex M4f system (STM32F3) at 72 MHz. It
  can be seen that the performance of the hashmap decreases significantly from a fill margin of 
  about 80%.
  ![Image](benches/cm4_performance/fchashmap.png)
+
+# Additional Remarks
+
+In a project I use the crate ArrayVec because of missing functionality in Heapless::Vec. Since I 
+needed additionally a HashMap I had to find out that there was no suitable stand alone HashMap, 
+which gets along without memory allocation and is no_std compatible. Since I am learning Rust 
+anyway, I decided to write my own hashmap.
+
+For the realization of the Hasmap I started from the above mentioned papers. For the 
+implementation I got many ideas from the Japarics Heapless::FnvIndexMap. I found that this HashMap 
+also uses Robin Hood hashing and I ended up with almost the same solution. Anyway, FcHashMap is 
+unfortunately almost 200 bytes bigger but still about 10% faster than. Which realization is better 
+to understand and maintain, please let everyone decide for himself. Many thanks to the authors of 
+FnvHashMap for the many useful inspirations.
 
 # License
 
