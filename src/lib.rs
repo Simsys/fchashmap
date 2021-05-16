@@ -80,7 +80,7 @@ use hash32::Hash;
 /// can be seen that the performance of the hashmap decreases significantly from a fill margin of 
 /// about 80%.
 ///
-/// ![Image](fchashmap_r.png)
+/// ![Image](https://github.com/Simsys/fchashmap/blob/master/benches/cm4_performance/fchashmap.png)
 pub struct FcHashMap<K, V, const CAP: usize> {
     map: Map<K, V, CAP>,
 }
