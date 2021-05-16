@@ -11,8 +11,8 @@
 //! [2](https://codecapsule.com/2013/11/17/robin-hood-hashing-backward-shift-deletion/))
 //! the functionality is explained very nicely.
 #![cfg_attr(not(test), no_std)]
-mod map;
-use map::{Iter, IterMut, Map};
+mod utils;
+use utils::{Iter, IterMut, Map};
 //use std::{fmt::Display};
 use core::{borrow::Borrow, fmt, iter::FromIterator, ops};
 use hash32::Hash;
@@ -81,16 +81,11 @@ use hash32::Hash;
 /// about 80%.
 ///
 /// ![Image](fchashmap_r.png)
-pub struct FcHashMap<K, V, const CAP: usize> /*    where
-K: Display,
-V: Display, */ {
+pub struct FcHashMap<K, V, const CAP: usize> {
     map: Map<K, V, CAP>,
 }
 
 impl<K, V, const CAP: usize> FcHashMap<K, V, CAP>
-/*where
-K: Display,
-V: Display, */
 {
     //    pub fn show(&self) { self.map.show() }
 

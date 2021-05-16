@@ -51,17 +51,6 @@ impl HashIndex {
         self.hash == HASH_VALUE_IS_EMPTY
     }
 }
-/*
-impl fmt::Display for HashIndex {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        if self.is_empty() {
-            write!(f, "None  ")
-        } else {
-            write!(f, "{} {:04X}", self.b_idx, self.hash.0)
-        }
-    }
-}
-*/
 
 #[derive(Clone, Copy)]
 pub struct Bucket<K, V> {
@@ -69,17 +58,6 @@ pub struct Bucket<K, V> {
     pub value: V,
     hash: HashValue,
 }
-/*
-impl<K, V> fmt::Display for Bucket<K, V>
-    where
-        K: Display,
-        V: Display,
-{
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{} {} {:04X} {}", self.key, self.value, self.hash.0, self.h_idx)
-    }
-}
-*/
 
 pub struct Map<K, V, const CAP: usize> /*    where
 K: Display,
@@ -90,23 +68,7 @@ V: Display,*/ {
 }
 
 impl<K, V, const CAP: usize> Map<K, V, CAP>
-/*    where
-K: Display,
-V: Display,*/
 {
-    /*    pub fn show(&self) {
-            print!("[");
-            for hash_index in &self.hash_table {
-                print!("{}, ", hash_index);
-            }
-            print!("], {{");
-            for bucket in &self.buckets {
-                print!("{}, ", bucket);
-            }
-            println!("}}");
-        }
-    */
-
     // Create a new map
     pub fn new() -> Self {
         debug_assert!((Self::capacity() as u32) < u32::MAX);
