@@ -1,8 +1,14 @@
 [package]
 name = "fchashmap"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Simsys <winfried.simon@gmail.com>"]
 edition = "2018"
+license = "MIT OR Apache-2.0"
+description = "A fixed capacity no_std hashmap"
+repository = "https://github.com/Simsys/fchashmap"
+readme = "readme.md"
+keywords = ["no-std", "static", "no-heap", "embedded"]
+categories = ["no-std", "embedded", "data-structures"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

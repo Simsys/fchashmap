@@ -84,13 +84,13 @@ needed additionally a HashMap I had to find out that there was no suitable stand
 which gets along without memory allocation and is no_std compatible. Since I am learning Rust 
 anyway, I decided to write my own hashmap.
 
-For the realization of the Hasmap I started from the above mentioned papers. For the 
+For the realization of the hashmap I started from the above mentioned papers. For the 
 implementation I got many ideas from the Japarics Heapless::FnvIndexMap. I found that this HashMap 
 also uses Robin Hood hashing and I ended up with almost the same solution. Anyway, FcHashMap is 
-unfortunately almost 200 bytes bigger but still about 10% faster than. Which realization is better 
-to understand and maintain, please let everyone decide for himself. Many thanks to the authors of 
-FnvHashMap for the many useful inspirations.
+unfortunately almost 200 bytes bigger but still about 10% faster than FnvIndexMap. Which 
+realization is better to understand and maintain, please let everyone decide for himself. Many 
+thanks to the authors of FnvHashMap for the many useful inspirations.
 
-# License
+## License
 
 Licensed under either of Apache License, Version 2.0 or MIT license at your option.
