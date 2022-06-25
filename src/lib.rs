@@ -16,6 +16,12 @@ use map::{Iter, IterMut, Map};
 //use std::{fmt::Display};
 use core::{borrow::Borrow, fmt, hash::Hash, iter::FromIterator, ops};
 
+#[cfg(feature = "serde")]
+use serde::{de, de::MapAccess, de::Visitor, Deserialize, Deserializer, Serialize, Serializer};
+
+#[cfg(feature = "serde")]
+use core::marker::PhantomData;
+
 /// A fixed capacity no_std hashmap.
 ///
 /// The realization of the hashmap is based on the Robin Hood hashing algorithm. This method  
@@ -491,5 +497,67 @@ where
 
     fn into_iter(self) -> Self::IntoIter {
         self.iter()
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<K, V, const CAP: usize> Serialize for FcHashMap<K, V, CAP>
+where
+    K: Serialize + Eq + Hash,
+    V: Serialize,
+{
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.collect_map(self)
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de, K, V, const CAP: usize> Deserialize<'de> for FcHashMap<K, V, CAP>
+where
+    K: Deserialize<'de> + Eq + Hash,
+    V: Deserialize<'de>,
+{
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        struct MapVisitor<K, V, const CAP: usize> {
+            marker: PhantomData<FcHashMap<K, V, CAP>>,
+        }
+
+        impl<'de, K, V, const CAP: usize> Visitor<'de> for MapVisitor<K, V, CAP>
+        where
+            K: Deserialize<'de> + Eq + Hash,
+            V: Deserialize<'de>,
+        {
+            type Value = FcHashMap<K, V, CAP>;
+
+            fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+                formatter.write_str("a map")
+            }
+
+            fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
+            where
+                A: MapAccess<'de>,
+            {
+                let mut values = FcHashMap::<K, V, CAP>::new();
+
+                while let Some((key, value)) = map.next_entry()? {
+                    values
+                        .insert(key, value)
+                        .map_err(|_| de::Error::custom("out of space"))?;
+                }
+
+                Ok(values)
+            }
+        }
+
+        let visitor = MapVisitor {
+            marker: PhantomData,
+        };
+        deserializer.deserialize_map(visitor)
     }
 }
