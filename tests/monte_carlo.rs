@@ -1,17 +1,15 @@
 use fchashmap::FcHashMap;
-use rand_xorshift::XorShiftRng;
 use rand_core::{RngCore, SeedableRng};
+use rand_xorshift::XorShiftRng;
 use std::collections::HashMap;
 
-
 struct MonteCarlo {
-    fc_hashmap: FcHashMap::<u32, u32, MAP_SIZE>,
-    std_hashmap: HashMap::<u32, u32>,
+    fc_hashmap: FcHashMap<u32, u32, MAP_SIZE>,
+    std_hashmap: HashMap<u32, u32>,
 }
 
 const MAP_SIZE: usize = 16384;
 const SEED: u64 = 1234567890987654321;
-
 
 impl MonteCarlo {
     fn new() -> Self {
@@ -30,14 +28,28 @@ impl MonteCarlo {
         match r_fc {
             Ok(r_v) => {
                 if r_v != r_std {
-                    println!("Error 1, len {}, key {}, value {}, r_v{:?}, r_std {:?}", self.fc_hashmap.len(), key, value, r_v, r_std);
+                    println!(
+                        "Error 1, len {}, key {}, value {}, r_v{:?}, r_std {:?}",
+                        self.fc_hashmap.len(),
+                        key,
+                        value,
+                        r_v,
+                        r_std
+                    );
                 };
                 assert_eq!(r_v, r_std);
-            },
+            }
             Err(e) => {
-                println!("Error 2, len {}, key {}, value {}, e{:?}, r_std {:?}", self.fc_hashmap.len(), key, value, e, r_std);
+                println!(
+                    "Error 2, len {}, key {}, value {}, e{:?}, r_std {:?}",
+                    self.fc_hashmap.len(),
+                    key,
+                    value,
+                    e,
+                    r_std
+                );
                 assert!(false);
-            },
+            }
         }
     }
 
@@ -48,7 +60,13 @@ impl MonteCarlo {
         let r_std = self.std_hashmap.remove(&key);
 
         if r_fc != r_std {
-            println!("Error 3, len {}, key {}, r_fc{:?}, r_std {:?}", self.fc_hashmap.len(), key, r_fc, r_std);
+            println!(
+                "Error 3, len {}, key {}, r_fc{:?}, r_std {:?}",
+                self.fc_hashmap.len(),
+                key,
+                r_fc,
+                r_std
+            );
         };
         assert_eq!(r_fc, r_std);
     }
@@ -60,7 +78,13 @@ impl MonteCarlo {
         let r_std = self.std_hashmap.get(&key);
 
         if r_fc != r_std {
-            println!("Error 4, len {}, key {}, r_fc{:?}, r_std {:?}", self.fc_hashmap.len(), key, r_fc, r_std);
+            println!(
+                "Error 4, len {}, key {}, r_fc{:?}, r_std {:?}",
+                self.fc_hashmap.len(),
+                key,
+                r_fc,
+                r_std
+            );
         };
         assert_eq!(r_fc, r_std);
     }
@@ -103,7 +127,7 @@ impl MonteCarlo {
         // First, we fill the map at 50%
         let mut rng = XorShiftRng::seed_from_u64(SEED);
         loop {
-            if self.fc_hashmap.len() >= MAP_SIZE/2 {
+            if self.fc_hashmap.len() >= MAP_SIZE / 2 {
                 break;
             }
             self.insert(&mut rng);
@@ -117,7 +141,13 @@ impl MonteCarlo {
             let r_std = self.std_hashmap.get(&key);
 
             if r_fc != r_std {
-                println!("Error 6, len {}, key {}, r_fc{:?}, r_std {:?}", self.fc_hashmap.len(), key, r_fc, r_std);
+                println!(
+                    "Error 6, len {}, key {}, r_fc{:?}, r_std {:?}",
+                    self.fc_hashmap.len(),
+                    key,
+                    r_fc,
+                    r_std
+                );
             };
             assert_eq!(r_fc, r_std);
         }
@@ -125,7 +155,7 @@ impl MonteCarlo {
 }
 
 #[test]
-fn monte_carlo () {
+fn monte_carlo() {
     let mut m = MonteCarlo::new();
     m.test_1();
     m.test_2();
