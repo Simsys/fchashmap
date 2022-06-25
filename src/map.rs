@@ -1,53 +1,117 @@
 #![allow(dead_code)]
 use arrayvec::ArrayVec;
-use core::{borrow::Borrow, mem, slice};
-use hash32::{BuildHasher, BuildHasherDefault, FnvHasher, Hash, Hasher};
+use core::{
+    borrow::Borrow,
+    hash::{BuildHasher, Hash},
+    mem, slice,
+};
+use hash32::{BuildHasherDefault, FnvHasher, Hasher};
 
-#[derive(Clone, Copy, PartialEq)]
-struct HashValue(u16);
+cfg_if::cfg_if! {
+    if #[cfg(feature = "hugesize")] {
+        use core::convert::TryFrom;
 
-// There are up to 0x7fff (32767) elements allowed. The first bit of u16 is used to mark
-// a empty element
-const HASH_VALUE_IS_EMPTY: HashValue = HashValue(0x8000);
+        #[derive(Clone, Copy, PartialEq)]
+        struct HashValue(u32);
 
-impl HashValue {
-    // Create 15 bit hash value from u32 hash
-    fn new(hash: u32) -> Self {
-        HashValue((hash & 0x7fff) as u16)
-    }
+        // There are up to 0x7fffffff (2^31 - 1) elements allowed. The first bit of u32 is used to mark
+        // a empty element
+        const HASH_VALUE_IS_EMPTY: HashValue = HashValue(0x80000000);
 
-    // Calulate expected index from hash value
-    fn desired_h_idx(&self, mask: usize) -> usize {
-        usize::from(self.0) & mask
-    }
+        impl HashValue {
+            // Drop the negative sign
+            fn new(hash: u32) -> Self {
+                HashValue((hash & 0x7fffffff) as u32)
+            }
 
-    // Calculate distance from expected index from current index
-    fn h_idx_distance(&self, mask: usize, current_h_idx: usize) -> usize {
-        current_h_idx.wrapping_sub(self.desired_h_idx(mask) as usize) & mask
-    }
-}
+            // Calulate expected index from hash value
+            fn desired_h_idx(&self, mask: usize) -> usize {
+                usize::try_from(self.0).unwrap() & mask
+            }
 
-// A Combination of hash value and index into the bucket list
-#[derive(Clone, Copy)]
-struct HashIndex {
-    hash: HashValue,
-    b_idx: u16,
-}
+            // Calculate distance from expected index from current index
+            fn h_idx_distance(&self, mask: usize, current_h_idx: usize) -> usize {
+                current_h_idx.wrapping_sub(self.desired_h_idx(mask) as usize) & mask
+            }
+        }
 
-impl HashIndex {
-    // Create a nuew hash index from given parameters
-    fn new(hash: HashValue, b_idx: usize) -> Self {
-        Self { hash, b_idx: b_idx as u16 }
-    }
+        // A Combination of hash value and index into the bucket list
+        #[derive(Clone, Copy)]
+        struct HashIndex {
+            hash: HashValue,
+            b_idx: u32,
+        }
 
-    // Clear actual hash index an mark it as empty
-    fn clear(&mut self) {
-        self.hash = HASH_VALUE_IS_EMPTY;
-    }
+        impl HashIndex {
+            // Create a nuew hash index from given parameters
+            fn new(hash: HashValue, b_idx: usize) -> Self {
+                Self {
+                    hash,
+                    b_idx: b_idx as u32,
+                }
+            }
 
-    // Check if hash index is empty
-    fn is_empty(&self) -> bool {
-        self.hash == HASH_VALUE_IS_EMPTY
+            // Clear actual hash index an mark it as empty
+            fn clear(&mut self) {
+                self.hash = HASH_VALUE_IS_EMPTY;
+            }
+
+            // Check if hash index is empty
+            fn is_empty(&self) -> bool {
+                self.hash == HASH_VALUE_IS_EMPTY
+            }
+        }
+    } else {
+        #[derive(Clone, Copy, PartialEq)]
+        struct HashValue(u16);
+
+        // There are up to 0x7fff (32767) elements allowed. The first bit of u16 is used to mark
+        // a empty element
+        const HASH_VALUE_IS_EMPTY: HashValue = HashValue(0x8000);
+
+        impl HashValue {
+            // Create 15 bit hash value from u32 hash
+            fn new(hash: u32) -> Self {
+                HashValue((hash & 0x7fff) as u16)
+            }
+
+            // Calulate expected index from hash value
+            fn desired_h_idx(&self, mask: usize) -> usize {
+                usize::from(self.0) & mask
+            }
+
+            // Calculate distance from expected index from current index
+            fn h_idx_distance(&self, mask: usize, current_h_idx: usize) -> usize {
+                current_h_idx.wrapping_sub(self.desired_h_idx(mask) as usize) & mask
+            }
+        }
+
+        // A Combination of hash value and index into the bucket list
+        #[derive(Clone, Copy)]
+        struct HashIndex {
+            hash: HashValue,
+            b_idx: u16,
+        }
+
+        impl HashIndex {
+            // Create a nuew hash index from given parameters
+            fn new(hash: HashValue, b_idx: usize) -> Self {
+                Self {
+                    hash,
+                    b_idx: b_idx as u16,
+                }
+            }
+
+            // Clear actual hash index an mark it as empty
+            fn clear(&mut self) {
+                self.hash = HASH_VALUE_IS_EMPTY;
+            }
+
+            // Check if hash index is empty
+            fn is_empty(&self) -> bool {
+                self.hash == HASH_VALUE_IS_EMPTY
+            }
+        }
     }
 }
 
@@ -64,8 +128,7 @@ pub struct Map<K, V, const CAP: usize> {
     build_hasher: BuildHasherDefault<FnvHasher>,
 }
 
-impl<K, V, const CAP: usize> Map<K, V, CAP>
-{
+impl<K, V, const CAP: usize> Map<K, V, CAP> {
     // Create a new map
     pub fn new() -> Self {
         debug_assert!((Self::capacity() as u32) < u32::MAX);
@@ -98,7 +161,7 @@ impl<K, V, const CAP: usize> Map<K, V, CAP>
     {
         let mut h = self.build_hasher.build_hasher();
         key.hash(&mut h);
-        HashValue::new(h.finish())
+        HashValue::new(h.finish32())
     }
 
     // Inserts a key-value pair into the map.
@@ -142,7 +205,7 @@ impl<K, V, const CAP: usize> Map<K, V, CAP>
                         if next_hash_index.is_empty() {
                             // We found the right place: store and return
                             *next_hash_index = hash_index;
-                            unsafe { self.buckets.push_unchecked( Bucket { key, value, hash }) }
+                            unsafe { self.buckets.push_unchecked(Bucket { key, value, hash }) }
                             return Ok(None);
                         } else {
                             // Replace HashIndexs and continue shifting and searching for a vacancy
@@ -211,7 +274,7 @@ impl<K, V, const CAP: usize> Map<K, V, CAP>
         // The HashIndex at location h_idx and the bucket at location b_idx are deleted.
         self.hash_table[found_h_idx].clear();
         let deleted_bucket = self.buckets.swap_pop(found_b_idx).unwrap(); // ArrayVec;
-        //let deleted_bucket = unsafe { self.buckets.swap_remove_unchecked(found_b_idx) }; // heapless::Vec;
+                                                                          //let deleted_bucket = unsafe { self.buckets.swap_remove_unchecked(found_b_idx) }; // heapless::Vec;
 
         // Correct index that points to the entry that had to swap places.
         // This has only to be done, if wass not the last element in self.buckets

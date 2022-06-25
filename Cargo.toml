@@ -13,13 +13,18 @@ categories = ["no-std", "embedded", "data-structures"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-hash32 = "0.2.1"
+hash32 = "0.3.0"
+cfg-if = "1.0.0"
 
 [dependencies.arrayvec]
-version = "0.7.0"
+version = "0.7.2"
 default-features = false
 
 [dev-dependencies]
-hash32-derive = "0.1.0"
+hash32-derive = "0.1.1"
 rand_xorshift = "0.3.0"
-rand_core = "0.6.2"
+rand_core = "0.6.3"
+
+[features]
+default = []
+hugesize = []
