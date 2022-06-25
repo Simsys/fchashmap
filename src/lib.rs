@@ -11,11 +11,16 @@
 //! [2](https://codecapsule.com/2013/11/17/robin-hood-hashing-backward-shift-deletion/))
 //! the functionality is explained very nicely.
 #![cfg_attr(not(test), no_std)]
-mod map;
+pub mod map;
 use map::{Iter, IterMut, Map};
 //use std::{fmt::Display};
-use core::{borrow::Borrow, fmt, iter::FromIterator, ops};
-use hash32::Hash;
+use core::{borrow::Borrow, fmt, hash::Hash, iter::FromIterator, ops};
+
+#[cfg(feature = "serde")]
+use serde::{de, de::MapAccess, de::Visitor, Deserialize, Deserializer, Serialize, Serializer};
+
+#[cfg(feature = "serde")]
+use core::marker::PhantomData;
 
 /// A fixed capacity no_std hashmap.
 ///
@@ -34,8 +39,6 @@ use hash32::Hash;
 ///
 /// ```
 /// use fchashmap::FcHashMap;
-/// use hash32_derive::Hash32;
-/// use hash32::Hash;
 ///
 /// #[derive(Debug)]
 /// struct Reading {
@@ -43,7 +46,7 @@ use hash32::Hash;
 ///     humidy: f32,
 /// }
 ///
-/// #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash32)]
+/// #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 /// struct DeviceId([u8; 8]);
 ///
 /// impl DeviceId {
@@ -73,11 +76,11 @@ use hash32::Hash;
 ///
 /// assert!(fc_hash_map.get(&dev3).is_none());
 /// ```
-/// 
+///
 /// ## Performance
 ///
 /// The following diagram shows the timing behavior on a Cortex M4f system (STM32F3) at 72 MHz. It
-/// can be seen that the performance of the hashmap decreases significantly from a fill margin of 
+/// can be seen that the performance of the hashmap decreases significantly from a fill margin of
 /// about 80%.
 ///
 /// ![Image](https://raw.githubusercontent.com/Simsys/fchashmap/master/benches/cm4_performance/fchashmap.png)
@@ -85,8 +88,7 @@ pub struct FcHashMap<K, V, const CAP: usize> {
     map: Map<K, V, CAP>,
 }
 
-impl<K, V, const CAP: usize> FcHashMap<K, V, CAP>
-{
+impl<K, V, const CAP: usize> FcHashMap<K, V, CAP> {
     //    pub fn show(&self) { self.map.show() }
 
     /// Creates an empty HashMap.
@@ -495,5 +497,67 @@ where
 
     fn into_iter(self) -> Self::IntoIter {
         self.iter()
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<K, V, const CAP: usize> Serialize for FcHashMap<K, V, CAP>
+where
+    K: Serialize + Eq + Hash,
+    V: Serialize,
+{
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.collect_map(self)
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de, K, V, const CAP: usize> Deserialize<'de> for FcHashMap<K, V, CAP>
+where
+    K: Deserialize<'de> + Eq + Hash,
+    V: Deserialize<'de>,
+{
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        struct MapVisitor<K, V, const CAP: usize> {
+            marker: PhantomData<FcHashMap<K, V, CAP>>,
+        }
+
+        impl<'de, K, V, const CAP: usize> Visitor<'de> for MapVisitor<K, V, CAP>
+        where
+            K: Deserialize<'de> + Eq + Hash,
+            V: Deserialize<'de>,
+        {
+            type Value = FcHashMap<K, V, CAP>;
+
+            fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+                formatter.write_str("a map")
+            }
+
+            fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
+            where
+                A: MapAccess<'de>,
+            {
+                let mut values = FcHashMap::<K, V, CAP>::new();
+
+                while let Some((key, value)) = map.next_entry()? {
+                    values
+                        .insert(key, value)
+                        .map_err(|_| de::Error::custom("out of space"))?;
+                }
+
+                Ok(values)
+            }
+        }
+
+        let visitor = MapVisitor {
+            marker: PhantomData,
+        };
+        deserializer.deserialize_map(visitor)
     }
 }
